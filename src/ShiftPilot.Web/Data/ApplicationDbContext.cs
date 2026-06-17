@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ShiftPilot.Domain.Organizations;
+using ShiftPilot.Domain.Employees;
 
 namespace ShiftPilot.Web.Data;
 
@@ -18,6 +19,11 @@ public sealed class ApplicationDbContext
 
     public DbSet<OrganizationMember> OrganizationMembers =>
         Set<OrganizationMember>();
+    public DbSet<JobRole> JobRoles =>
+        Set<JobRole>();
+
+    public DbSet<EmployeeProfile> EmployeeProfiles =>
+        Set<EmployeeProfile>();    
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -25,6 +31,8 @@ public sealed class ApplicationDbContext
 
         ConfigureOrganization(builder);
         ConfigureOrganizationMember(builder);
+        ConfigureJobRole(builder);
+        ConfigureEmployeeProfile(builder);
     }
 
     private static void ConfigureOrganization(
@@ -88,5 +96,82 @@ public sealed class ApplicationDbContext
             .WithMany()
             .HasForeignKey(member => member.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+    }
+    private static void ConfigureJobRole(
+    ModelBuilder builder)
+    {
+    var entity = builder.Entity<JobRole>();
+
+    entity.ToTable("JobRoles");
+
+    entity.HasKey(jobRole => jobRole.Id);
+
+    entity.Property(jobRole => jobRole.Name)
+        .HasMaxLength(80)
+        .IsRequired();
+
+    entity.Property(jobRole => jobRole.IsActive)
+        .IsRequired();
+
+    entity.Property(jobRole => jobRole.CreatedAtUtc)
+        .IsRequired();
+
+    entity.HasIndex(jobRole => new
+        {
+            jobRole.OrganizationId,
+            jobRole.Name
+        })
+        .IsUnique();
+
+    entity.HasOne<Organization>()
+        .WithMany()
+        .HasForeignKey(jobRole => jobRole.OrganizationId)
+        .OnDelete(DeleteBehavior.Cascade);
+    }
+    private static void ConfigureEmployeeProfile(
+    ModelBuilder builder)
+    {
+    var entity = builder.Entity<EmployeeProfile>();
+
+    entity.ToTable("EmployeeProfiles");
+
+    entity.HasKey(profile => profile.Id);
+
+    entity.Property(profile => profile.DisplayName)
+        .HasMaxLength(100)
+        .IsRequired();
+
+    entity.Property(profile => profile.MaximumWeeklyHours)
+        .HasPrecision(5, 2)
+        .IsRequired();
+
+    entity.Property(profile => profile.MinimumRestHours)
+        .IsRequired();
+
+    entity.Property(profile => profile.IsAvailableForScheduling)
+        .IsRequired();
+
+    entity.Property(profile => profile.CreatedAtUtc)
+        .IsRequired();
+
+    entity.HasIndex(profile => profile.OrganizationMemberId)
+        .IsUnique();
+
+    entity.HasIndex(profile => new
+        {
+            profile.OrganizationId,
+            profile.JobRoleId
+        });
+
+    entity.HasOne<OrganizationMember>()
+        .WithOne()
+        .HasForeignKey<EmployeeProfile>(
+            profile => profile.OrganizationMemberId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+    entity.HasOne<JobRole>()
+        .WithMany()
+        .HasForeignKey(profile => profile.JobRoleId)
+        .OnDelete(DeleteBehavior.Restrict);
     }
 }
