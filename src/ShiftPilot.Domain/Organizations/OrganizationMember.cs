@@ -26,6 +26,8 @@ public sealed class OrganizationMember
                 nameof(userId));
         }
 
+        EnsureValidRole(role);
+
         Id = Guid.NewGuid();
         OrganizationId = organizationId;
         UserId = userId.Trim();
@@ -48,6 +50,7 @@ public sealed class OrganizationMember
 
     public void ChangeRole(MembershipRole role)
     {
+        EnsureValidRole(role);
         Role = role;
     }
 
@@ -59,5 +62,16 @@ public sealed class OrganizationMember
     public void Reactivate()
     {
         IsActive = true;
+    }
+
+    private static void EnsureValidRole(MembershipRole role)
+    {
+        if (!Enum.IsDefined(role))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(role),
+                role,
+                "The membership role is invalid.");
+        }
     }
 }

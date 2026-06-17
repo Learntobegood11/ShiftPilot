@@ -40,7 +40,8 @@ application for small and medium-sized organizations.
 
 ```bash
 dotnet restore
-dotnet ef database update \
-  --project src/ShiftPilot.Web \
-  --startup-project src/ShiftPilot.Web
-dotnet watch --project src/ShiftPilot.Web
+dotnet tool restore
+dotnet tool run dotnet-ef database update --project src\ShiftPilot.Web --startup-project src\ShiftPilot.Web
+dotnet watch --project src\ShiftPilot.Web
+
+
